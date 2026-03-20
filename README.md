@@ -24,6 +24,29 @@ You get a dialog: Enter to allow, Escape to block.
 
 In non-interactive mode (no UI), all mutations are blocked by default.
 
+## YOLO modes
+
+Use `/yolo` to cycle through three modes at any time during a session:
+
+| Mode | Footer label | Write/Edit | Bash |
+|------|-------------|-----------|------|
+| `off` (default) | `nolo` | confirm | confirm (safe cmds auto-approved) |
+| `writes` | `writes-yolo` | **auto-allow** | confirm (safe cmds auto-approved) |
+| `full` | `full-yolo 🤠` | **auto-allow** | **auto-allow** |
+
+Each `/yolo` invocation advances to the next mode and wraps back around:
+
+```
+off → writes-yolo → full-yolo → off → …
+```
+
+The current mode is shown in the footer status bar. It is also persisted in the session so it survives a `/reload`.
+
+### When to use each mode
+
+- **`writes`** — you trust the edits but still want a gate on shell commands.
+- **`full`** — you want the agent to run completely hands-free. Use with caution.
+
 ## Bash Command Allowlist
 
 Safe commands are auto-approved without a confirmation dialog. A command is considered safe when:
