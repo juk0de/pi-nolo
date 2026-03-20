@@ -1,0 +1,20 @@
+{
+  "safePrefixes": [
+    "ls", "cat", "head", "tail", "wc",
+    "find", "grep", "rg", "fd", "tree",
+    "file", "stat", "du", "df",
+    "which", "whoami", "pwd", "echo", "date", "uname",
+    "env", "printenv",
+    "git status", "git log", "git diff", "git show",
+    "git branch", "git remote", "git tag", "git rev-parse",
+    "npm list", "npm outdated", "npm view",
+    "node --version", "python --version",
+    "cargo --version", "rustc --version", "go version"
+  ],
+  "dangerousPatterns": [
+    "\\|", "&&", "\\|\\|", ";", "`", "\\$\\(",
+    ">\\s", ">>",
+    "\\brm\\b", "\\bsudo\\b", "\\beval\\b", "\\bexec\\b",
+    "\\bsource\\b", "\\bsh\\b", "\\bbash\\b"
+  ]
+}
