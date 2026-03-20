@@ -2,24 +2,13 @@
 
 No-YOLO mode for [pi-coding-agent](https://github.com/nichochar/pi-mono). Gates `write`, `edit`, and `bash` tool calls behind user confirmation — press Enter to allow, Escape to block.
 
-## Quick setup
-
-Clone directly into the pi extensions directory so it loads automatically:
+## Install
 
 ```bash
-git clone https://github.com/burneikis/pi-nolo.git ~/.pi/agent/extensions/pi-nolo
+curl -fsSL https://raw.githubusercontent.com/burneikis/pi-nolo/main/confirm-all-writes.ts -o ~/.pi/agent/extensions/confirm-all-writes.ts
 ```
 
 That's it — pi will discover the extension on next start.
-
-## Alternative setup
-
-Clone wherever you like and load it manually:
-
-```bash
-git clone https://github.com/burneikis/pi-nolo.git
-pi --extension /path/to/pi-nolo/confirm-all-writes.ts
-```
 
 ## What it does
 
