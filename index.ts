@@ -222,37 +222,52 @@ export default function (pi: ExtensionAPI) {
     }
   });
 
+  // --- Shared cycle logic ---
+
+  function cycleYolo(ctx: { hasUI: boolean; ui: any }) {
+    const currentIndex = YOLO_MODES.indexOf(yoloMode);
+    yoloMode = YOLO_MODES[(currentIndex + 1) % YOLO_MODES.length];
+
+    // Persist mode to session so it survives /reload
+    pi.appendEntry(YOLO_ENTRY_TYPE, { mode: yoloMode });
+
+    if (ctx.hasUI) {
+      updateStatus(ctx);
+      const label = YOLO_LABELS[yoloMode];
+      if (yoloMode === "off") {
+        ctx.ui.notify(
+          `YOLO mode off — all mutations require confirmation`,
+          "info",
+        );
+      } else if (yoloMode === "writes") {
+        ctx.ui.notify(
+          `${label} — write/edit auto-approved; bash still guarded`,
+          "info",
+        );
+      } else {
+        ctx.ui.notify(
+          `${label} — ALL tool calls auto-approved, no confirmations`,
+          "info",
+        );
+      }
+    }
+  }
+
   // --- /yolo command: cycle through modes ---
 
   pi.registerCommand("yolo", {
     description: "Cycle YOLO mode: off → writes-yolo → full-yolo → off",
     handler: async (_args, ctx) => {
-      const currentIndex = YOLO_MODES.indexOf(yoloMode);
-      yoloMode = YOLO_MODES[(currentIndex + 1) % YOLO_MODES.length];
+      cycleYolo(ctx);
+    },
+  });
 
-      // Persist mode to session so it survives /reload
-      pi.appendEntry(YOLO_ENTRY_TYPE, { mode: yoloMode });
+  // --- ctrl+y keybinding: cycle through modes ---
 
-      if (ctx.hasUI) {
-        updateStatus(ctx);
-        const label = YOLO_LABELS[yoloMode];
-        if (yoloMode === "off") {
-          ctx.ui.notify(
-            `YOLO mode off — all mutations require confirmation`,
-            "info",
-          );
-        } else if (yoloMode === "writes") {
-          ctx.ui.notify(
-            `${label} — write/edit auto-approved; bash still guarded`,
-            "info",
-          );
-        } else {
-          ctx.ui.notify(
-            `${label} — ALL tool calls auto-approved, no confirmations`,
-            "info",
-          );
-        }
-      }
+  pi.registerShortcut("ctrl+y", {
+    description: "Cycle YOLO mode: off → writes-yolo → full-yolo → off",
+    handler: async (ctx) => {
+      cycleYolo(ctx);
     },
   });
 
