@@ -31,8 +31,8 @@ Use `/yolo` to cycle through three modes at any time during a session:
 | Mode | Footer label | Write/Edit | Bash |
 |------|-------------|-----------|------|
 | `off` (default) | `nolo` | confirm | confirm (safe cmds auto-approved) |
-| `writes` | `writes-yolo` | **auto-allow** | confirm (safe cmds auto-approved) |
-| `full` | `full-yolo 🤠` | **auto-allow** | **auto-allow** |
+| `writes` | `writes` | **auto-allow** | confirm (safe cmds auto-approved) |
+| `full` | `yolo` | **auto-allow** | **auto-allow** |
 
 Each `/yolo` invocation advances to the next mode and wraps back around:
 
