@@ -244,12 +244,12 @@ export default function (pi: ExtensionAPI) {
         } else if (yoloMode === "writes") {
           ctx.ui.notify(
             `${label} — write/edit auto-approved; bash still guarded`,
-            "warning",
+            "info",
           );
         } else {
           ctx.ui.notify(
             `${label} — ALL tool calls auto-approved, no confirmations`,
-            "error",
+            "info",
           );
         }
       }
