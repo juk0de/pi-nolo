@@ -2,17 +2,27 @@
   "name": "@burneikis/pi-nolo",
   "version": "1.0.0",
   "description": "No-YOLO mode for pi — gates write, edit, and bash tool calls behind user confirmation with configurable safe-command allowlists and YOLO override modes.",
-  "keywords": ["pi-package"],
+  "keywords": [
+    "pi-package"
+  ],
   "license": "MIT",
   "author": "burneikis",
   "repository": {
     "type": "git",
     "url": "https://github.com/burneikis/pi-nolo.git"
   },
+  "scripts": {
+    "test": "tsx --test tests/*.test.ts"
+  },
   "peerDependencies": {
     "@mariozechner/pi-coding-agent": "*"
   },
   "pi": {
-    "extensions": ["./index.ts"]
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
   }
 }

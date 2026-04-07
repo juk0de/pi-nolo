@@ -1,0 +1,76 @@
+import { describe, it, before, after } from "node:test";
+import assert from "node:assert/strict";
+import { mkdirSync, writeFileSync, rmSync, existsSync } from "fs";
+import { join } from "path";
+import { tmpdir } from "os";
+import {
+  loadConfig,
+  DEFAULT_SAFE_PREFIXES,
+  DEFAULT_DANGEROUS_PATTERNS,
+} from "../src/config.js";
+
+// loadConfig reads from homedir()/.pi/agent/nolo.json and .pi/nolo.json.
+// We test it in the project directory context by writing a .pi/nolo.json
+// in a temp working directory and changing process.cwd via cd isn't possible
+// in-process, so we write directly to .pi/nolo.json relative to cwd instead.
+
+const PROJECT_CFG = join(".pi", "nolo.json");
+
+function cleanProjectCfg() {
+  if (existsSync(PROJECT_CFG)) rmSync(PROJECT_CFG, { force: true });
+}
+
+describe("loadConfig", () => {
+  after(cleanProjectCfg);
+
+  it("returns defaults when no config files exist", () => {
+    cleanProjectCfg();
+    const cfg = loadConfig();
+    assert.deepEqual(cfg.safePrefixes, DEFAULT_SAFE_PREFIXES);
+    assert.equal(cfg.dangerousRegexes.length, DEFAULT_DANGEROUS_PATTERNS.length);
+  });
+
+  it("merges extra safePrefixes from project config", () => {
+    mkdirSync(".pi", { recursive: true });
+    writeFileSync(PROJECT_CFG, JSON.stringify({ safePrefixes: ["myctl status"] }));
+    const cfg = loadConfig();
+    assert.ok(cfg.safePrefixes.includes("myctl status"));
+    assert.ok(cfg.safePrefixes.includes("ls"), "defaults are preserved");
+    cleanProjectCfg();
+  });
+
+  it("project config deduplucates existing safe prefixes", () => {
+    mkdirSync(".pi", { recursive: true });
+    writeFileSync(PROJECT_CFG, JSON.stringify({ safePrefixes: ["ls", "cat"] }));
+    const cfg = loadConfig();
+    const lsCount = cfg.safePrefixes.filter((p) => p === "ls").length;
+    assert.equal(lsCount, 1);
+    cleanProjectCfg();
+  });
+
+  it("project dangerousPatterns fully overrides defaults", () => {
+    mkdirSync(".pi", { recursive: true });
+    writeFileSync(PROJECT_CFG, JSON.stringify({ dangerousPatterns: ["\\bkill\\b"] }));
+    const cfg = loadConfig();
+    assert.equal(cfg.dangerousRegexes.length, 1);
+    assert.ok(cfg.dangerousRegexes[0].test("kill 1234"));
+    cleanProjectCfg();
+  });
+
+  it("returns compiled RegExp objects for dangerous patterns", () => {
+    cleanProjectCfg();
+    const cfg = loadConfig();
+    for (const re of cfg.dangerousRegexes) {
+      assert.ok(re instanceof RegExp);
+    }
+  });
+
+  it("gracefully ignores malformed JSON config", () => {
+    mkdirSync(".pi", { recursive: true });
+    writeFileSync(PROJECT_CFG, "{ this is not json }");
+    // Should not throw; falls back to defaults
+    const cfg = loadConfig();
+    assert.deepEqual(cfg.safePrefixes, DEFAULT_SAFE_PREFIXES);
+    cleanProjectCfg();
+  });
+});
