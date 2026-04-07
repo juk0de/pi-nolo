@@ -26,7 +26,6 @@ export const DEFAULT_SAFE_PREFIXES = [
   "echo",
   "date",
   "uname",
-  "env",
   "printenv",
   "git status",
   "git log",
@@ -44,25 +43,51 @@ export const DEFAULT_SAFE_PREFIXES = [
   "cargo --version",
   "rustc --version",
   "go version",
+  // shell built-ins used as no-ops or fallbacks
+  "true",
+  "false",
+  ":",
+  // common read-only pipeline filters
+  "sort",
+  "uniq",
+  "cut",
+  "tr",
+  "sed",
+  "jq",
+  "column",
+  "paste",
+  "comm",
+  "diff",
+  "less",
+  "more",
 ];
 
+// Checked against the full command string before splitting.
+// Catches constructs that are dangerous regardless of which command uses them.
 export const DEFAULT_DANGEROUS_PATTERNS = [
-  "\\|",
-  "&&",
-  "\\|\\|",
-  ";",
-  "`",
-  "\\$\\(",
-  ">\\s",
-  ">>",
+  "`",          // backtick command substitution
+  "\\$\\(",    // $() command substitution
   "\\brm\\b",
   "\\bsudo\\b",
   "\\beval\\b",
-  "\\bexec\\b",
   "\\bsource\\b",
-  "\\bsh\\b",
-  "\\bbash\\b",
 ];
+
+// Checked against each individual segment after splitting on shell operators.
+// Catches dangerous flags or calls that appear within otherwise-safe commands.
+// Keeping these per-segment avoids false positives such as \bsh\b matching
+// a .sh filename in a git show or grep argument.
+export const DEFAULT_SEGMENT_DANGEROUS_PATTERNS = [
+  "^sh\\b",                            // sh used as a command
+  "^bash\\b",                          // bash used as a command
+  "^exec\\b",                          // exec shell builtin
+  "[ \\t]-(?:exec|execdir|ok|delete)\\b", // find flags that run or delete
+  "\\bsystem\\s*\\(",                  // awk/sed system() call
+];
+
+// Matches stdout redirects (> or >>). Only 2> (stderr) is exempted; any other
+// fd-prefixed or bare redirect is treated as a potential file write.
+export const STDOUT_REDIRECT_RE = /(?<!2)>>?(?!&)/;
 
 // --- Loader ---
 
@@ -78,6 +103,7 @@ function loadJsonFile(path: string): Partial<NoloConfig> | null {
 export interface LoadedConfig {
   safePrefixes: string[];
   dangerousRegexes: RegExp[];
+  segmentDangerousRegexes: RegExp[];
 }
 
 export function loadConfig(): LoadedConfig {
@@ -97,12 +123,22 @@ export function loadConfig(): LoadedConfig {
   }
 
   // Dangerous patterns: project overrides global overrides defaults
-  let dangerousPatterns = DEFAULT_DANGEROUS_PATTERNS;
+  let dangerousPatterns: string[] = DEFAULT_DANGEROUS_PATTERNS;
   if (globalCfg?.dangerousPatterns) dangerousPatterns = globalCfg.dangerousPatterns;
   if (projectCfg?.dangerousPatterns) dangerousPatterns = projectCfg.dangerousPatterns;
+
+  // Segment dangerous patterns: same override semantics
+  let segmentDangerousPatterns: string[] = DEFAULT_SEGMENT_DANGEROUS_PATTERNS;
+  if (globalCfg?.segmentDangerousPatterns) {
+    segmentDangerousPatterns = globalCfg.segmentDangerousPatterns;
+  }
+  if (projectCfg?.segmentDangerousPatterns) {
+    segmentDangerousPatterns = projectCfg.segmentDangerousPatterns;
+  }
 
   return {
     safePrefixes,
     dangerousRegexes: dangerousPatterns.map((p) => new RegExp(p)),
+    segmentDangerousRegexes: segmentDangerousPatterns.map((p) => new RegExp(p)),
   };
 }

@@ -7,6 +7,7 @@ import {
   loadConfig,
   DEFAULT_SAFE_PREFIXES,
   DEFAULT_DANGEROUS_PATTERNS,
+  DEFAULT_SEGMENT_DANGEROUS_PATTERNS,
 } from "../src/config.js";
 
 // loadConfig reads from homedir()/.pi/agent/nolo.json and .pi/nolo.json.
@@ -28,6 +29,7 @@ describe("loadConfig", () => {
     const cfg = loadConfig();
     assert.deepEqual(cfg.safePrefixes, DEFAULT_SAFE_PREFIXES);
     assert.equal(cfg.dangerousRegexes.length, DEFAULT_DANGEROUS_PATTERNS.length);
+    assert.equal(cfg.segmentDangerousRegexes.length, DEFAULT_SEGMENT_DANGEROUS_PATTERNS.length);
   });
 
   it("merges extra safePrefixes from project config", () => {
@@ -72,5 +74,22 @@ describe("loadConfig", () => {
     const cfg = loadConfig();
     assert.deepEqual(cfg.safePrefixes, DEFAULT_SAFE_PREFIXES);
     cleanProjectCfg();
+  });
+
+  it("project segmentDangerousPatterns fully overrides defaults", () => {
+    mkdirSync(".pi", { recursive: true });
+    writeFileSync(PROJECT_CFG, JSON.stringify({ segmentDangerousPatterns: ["^python\\b"] }));
+    const cfg = loadConfig();
+    assert.equal(cfg.segmentDangerousRegexes.length, 1);
+    assert.ok(cfg.segmentDangerousRegexes[0].test("python script.py"));
+    cleanProjectCfg();
+  });
+
+  it("returns default segment dangerous regexes when not overridden", () => {
+    cleanProjectCfg();
+    const cfg = loadConfig();
+    for (const re of cfg.segmentDangerousRegexes) {
+      assert.ok(re instanceof RegExp);
+    }
   });
 });

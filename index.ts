@@ -2,8 +2,12 @@
  * Confirm All Writes Extension (pi-nolo)
  *
  * Gates write, edit, and bash tools behind user confirmation (Enter to allow, Escape to block).
- * Read-safe bash commands (ls, grep, git status, etc.) are auto-approved via a configurable allowlist.
- * Commands containing dangerous patterns (pipes, chaining, redirects, etc.) always require confirmation.
+ * Read-safe bash commands are auto-approved: a command is safe when every segment (split on |, &&,
+ * ||, ;) starts with a known safe prefix and the command contains no stdout redirects or unsafe
+ * constructs. Two layers of dangerous-pattern checks are applied:
+ *   global  -- checked on the full command string (backticks, $(), rm, sudo, eval, source)
+ *   segment -- checked per segment (sh/bash as commands, find -exec/-delete, system() calls)
+ * Stderr redirects such as 2>/dev/null are allowed. Both pattern sets are configurable.
  *
  * YOLO modes (toggle with /yolo or ctrl+y):
  *   off        — default: confirm all writes/edits/bash (safe bash commands auto-approved)
@@ -12,7 +16,7 @@
  */
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { loadConfig, DEFAULT_SAFE_PREFIXES, DEFAULT_DANGEROUS_PATTERNS } from "./src/config.js";
+import { loadConfig, DEFAULT_SAFE_PREFIXES, DEFAULT_DANGEROUS_PATTERNS, DEFAULT_SEGMENT_DANGEROUS_PATTERNS } from "./src/config.js";
 import { isSafeCommand } from "./src/safety.js";
 import {
   createYoloState,
@@ -24,6 +28,7 @@ import {
 export default function (pi: ExtensionAPI) {
   let safePrefixes = DEFAULT_SAFE_PREFIXES;
   let dangerousRegexes = DEFAULT_DANGEROUS_PATTERNS.map((p) => new RegExp(p));
+  let segmentDangerousRegexes = DEFAULT_SEGMENT_DANGEROUS_PATTERNS.map((p) => new RegExp(p));
   const yolo = createYoloState();
 
   // --- Session start: restore mode + reload config ---
@@ -32,6 +37,7 @@ export default function (pi: ExtensionAPI) {
     const config = loadConfig();
     safePrefixes = config.safePrefixes;
     dangerousRegexes = config.dangerousRegexes;
+    segmentDangerousRegexes = config.segmentDangerousRegexes;
 
     restoreYoloMode(ctx.sessionManager.getEntries(), yolo);
 
@@ -84,7 +90,7 @@ export default function (pi: ExtensionAPI) {
       if (!ctx.hasUI) return { block: true, reason: "Blocked by user" };
 
       const command = event.input.command as string;
-      if (isSafeCommand(command, safePrefixes, dangerousRegexes)) return undefined;
+      if (isSafeCommand(command, safePrefixes, dangerousRegexes, segmentDangerousRegexes)) return undefined;
 
       const confirmed = await ctx.ui.confirm("Run command?", command);
       if (!confirmed) return { block: true, reason: "Blocked by user" };
