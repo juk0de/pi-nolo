@@ -23,6 +23,10 @@
     ]
   },
   "devDependencies": {
+    "@types/diff": "^7.0.2",
     "tsx": "^4.21.0"
+  },
+  "dependencies": {
+    "diff": "^8.0.4"
   }
 }

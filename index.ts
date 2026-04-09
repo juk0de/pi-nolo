@@ -24,6 +24,7 @@ import {
   renderStatus,
   cycleYoloMode,
 } from "./src/yolo.js";
+import { registerPreRenderEdit } from "./src/pre-render-edit.js";
 
 export default function (pi: ExtensionAPI) {
   let safePrefixes = DEFAULT_SAFE_PREFIXES;
@@ -44,6 +45,8 @@ export default function (pi: ExtensionAPI) {
     if (ctx.hasUI) {
       ctx.ui.setStatus("nolo", renderStatus(yolo, ctx.ui.theme));
     }
+
+    registerPreRenderEdit(pi, ctx.cwd);
   });
 
   // --- /yolo command and ctrl+y shortcut: cycle through modes ---

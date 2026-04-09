@@ -20,19 +20,23 @@ pi install https://github.com/burneikis/pi-nolo
 
 There will be a keybing conflict with `ctrl+y` for cycling yolo mode, and `tui.editor.yank`, so I recommend changing `~/.pi/agent/keybindings.json` to include `"tui.editor.yank": "ctrl+shift+y"`.
 
-as of pi ~0.63.0, the edit tool diff is post-rendered rather than pre-rendered, so if you want to see the edit before accepting you need to `pi install git:github.com/burneikis/pi-pre-render-edit` as well.
-
 ## What it does
 
 Every time the agent tries to:
 
 - **Write a file** — confirms with the file path and line count
-- **Edit a file** — confirms with the file path
+- **Edit a file** — confirms with the file path; shows a pre-rendered diff preview before the tool finishes executing
 - **Run a bash command** — auto-approves safe read-only commands; confirms everything else
 
 You get a dialog: Enter to allow, Escape to block.
 
 In non-interactive mode (no UI), all mutations are blocked by default.
+
+## Pre-rendered edit diffs
+
+As of pi ~0.63.0, the built-in edit tool only shows diffs after execution. This extension includes a built-in pre-renderer (ported from [pi-pre-render-edit](https://github.com/burneikis/pi-pre-render-edit)) that computes and displays the diff as soon as the tool arguments are complete -- before the edit is applied. This means you can see exactly what will change while the confirmation dialog is open.
+
+If you previously installed `pi-pre-render-edit` separately, you can remove it -- the functionality is now bundled here.
 
 ## YOLO modes
 
