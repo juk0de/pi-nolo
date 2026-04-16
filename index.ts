@@ -60,7 +60,7 @@ export default function (pi: ExtensionAPI) {
     handler: cycleHandler,
   });
 
-  pi.registerShortcut("ctrl+y", {
+  pi.registerShortcut("ctrl+shift+y", {
     description: "Cycle YOLO mode: off → writes-yolo → full-yolo → off",
     handler: async (ctx) => cycleYoloMode(yolo, pi, ctx),
   });
